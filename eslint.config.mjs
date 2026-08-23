@@ -1,9 +1,12 @@
 import js from "@eslint/js";
 import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import { defineConfig } from "eslint/config";
 
-export default [
+export default defineConfig([
   {
-    ignores: ["node_modules/**", "dist/**", "build/**"],
+    ignores: ["**/node_modules/**", "**/dist/**", "**/build/**"],
   },
 
   js.configs.recommended,
@@ -18,13 +21,23 @@ export default [
     },
   },
 
-  // Client: browser, ES modules
+  // Client: React, browser, ES modules
   {
-    files: ["client/**/*.js", "client/**/*.mjs"],
+    files: ["client/**/*.{js,jsx}"],
+    extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
       globals: globals.browser,
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+  },
+
+  // Client build tooling runs in Node, not the browser
+  {
+    files: ["client/vite.config.js"],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 
@@ -38,4 +51,4 @@ export default [
       "no-var": "error",
     },
   },
-];
+]);

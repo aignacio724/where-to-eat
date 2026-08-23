@@ -2,8 +2,18 @@
   "name": "where-to-eat",
   "version": "1.0.0",
   "description": "This is a small project that explores utilizing the Google Maps API to search for resturants and make a random selection from the search to provide a suggested place to eat for the user",
-  "main": "index.js",
+  "private": true,
+  "type": "commonjs",
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
+    "dev": "concurrently -k -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:client": "npm run dev --workspace=client",
+    "dev:server": "npm run dev --workspace=server",
+    "build": "npm run build --workspace=client",
+    "start": "npm run start --workspace=server",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
@@ -15,19 +25,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/aignacio724/where-to-eat/issues"
   },
   "homepage": "https://github.com/aignacio724/where-to-eat#readme",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1"
-  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.5",
     "eslint": "^10.9.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.11.0"
   }
 }
