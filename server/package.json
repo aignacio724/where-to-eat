@@ -3,11 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "description": "Express API for where-to-eat",
-  "main": "index.js",
+  "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "node --watch index.js",
-    "start": "node index.js"
+    "dev": "node --watch server.js",
+    "start": "node server.js"
   },
   "license": "ISC",
   "dependencies": {
