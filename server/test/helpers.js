@@ -1,4 +1,5 @@
 const { app } = require("../app");
+const { resetRateLimit } = require("../rateLimit");
 
 const TEST_API_KEY = "test-api-key-do-not-use";
 
@@ -40,4 +41,5 @@ module.exports = {
   mockFetch,
   requestBodyOf,
   requestHeadersOf,
+  resetRateLimit,
 };

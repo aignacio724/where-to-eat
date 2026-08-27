@@ -9,6 +9,7 @@ const {
   mockFetch,
   requestBodyOf,
   requestHeadersOf,
+  resetRateLimit,
 } = require("./helpers");
 const { MAX_RESULT_COUNT, RADIUS, PLACES_URL, FIELD_MASK } = require("../app");
 
@@ -35,6 +36,9 @@ test.describe("POST /api/restaurants", () => {
   let originalKey;
 
   test.beforeEach(() => {
+    // Counters are shared across the whole suite, so clear them per test
+    // rather than letting one case exhaust the budget for the next.
+    resetRateLimit();
     originalKey = process.env.GOOGLE_MAPS_API_KEY;
     process.env.GOOGLE_MAPS_API_KEY = TEST_API_KEY;
   });
