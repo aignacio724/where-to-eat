@@ -19,7 +19,15 @@ const getApiKey = () => process.env.GOOGLE_MAPS_API_KEY;
 const app = express();
 
 app.use(cors()); // Allows React to communicate with this server
-app.use(express.json());
+
+// Neither route accepts anything close to this; the cap just stops a large
+// body from being parsed at all.
+app.use(express.json({ limit: "10kb" }));
+
+// Guards both routes, since both spend money at Google. Note that behind a
+// reverse proxy every request appears to come from the proxy's IP -- deploying
+// that way needs `app.set("trust proxy", ...)` or the limit becomes global.
+app.use("/api", apiLimiter);
 
 app.post("/api/restaurants", async (req, res) => {
   // Google Places API requires coordinates: latitude, longitude
