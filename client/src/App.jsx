@@ -29,6 +29,48 @@ async function errorMessageFrom(response, fallback) {
   return (body.error || fallback) + details;
 }
 
+/**
+ * The address field, and the anchor the suggestion popover positions itself
+ * against. Split out from the form purely for readability.
+ */
+function AddressField({ value, onValueChange, isOpen }) {
+  return (
+    <PopoverAnchor asChild>
+      {/* asChild keeps a real <input> in the form, so Enter still submits
+          when no suggestion is highlighted. */}
+      <CommandPrimitive.Input asChild value={value} onValueChange={onValueChange}>
+        <Input
+          id="address"
+          type="text"
+          // cmdk points aria-labelledby at a hidden label of its own, which
+          // would leave the field with no accessible name. The child's props
+          // win the Slot merge, so this takes it back.
+          aria-labelledby="address-label"
+          // Removing cmdk's marker attribute is what stops it pulling focus to
+          // the list every time the highlighted option changes. With a
+          // debounced remote list that fires on every pause in typing, so the
+          // field would lose focus mid-address and swallow the next keystroke.
+          // cmdk reads this attribute nowhere else.
+          cmdk-input={undefined}
+          placeholder="1600 Amphitheatre Pkwy"
+          autoComplete="off"
+          className="w-80 max-w-full"
+          onKeyDown={(event) => {
+            // cmdk preventDefaults Enter on the Command root so it can pick the
+            // highlighted item, which also swallows the form's implicit
+            // submission. With nothing open there is nothing to pick, so
+            // submit here instead.
+            if (event.key === 'Enter' && !isOpen) {
+              event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
+            }
+          }}
+        />
+      </CommandPrimitive.Input>
+    </PopoverAnchor>
+  );
+}
+
 // useMapsLibrary reads APIProvider's context, so it cannot live in the
 // component that renders APIProvider — hence this inner component.
 function RestaurantFinder() {
@@ -208,33 +250,11 @@ function RestaurantFinder() {
               if (!isOpen) setSuggestions([]);
             }}
           >
-            <PopoverAnchor asChild>
-              {/* asChild keeps a real <input> in the form, so Enter still
-                  submits when no suggestion is highlighted. */}
-              <CommandPrimitive.Input asChild value={address} onValueChange={setAddress}>
-                <Input
-                  id="address"
-                  type="text"
-                  // cmdk points aria-labelledby at a hidden label of its own,
-                  // which would leave the field with no accessible name. The
-                  // child's props win the Slot merge, so this takes it back.
-                  aria-labelledby="address-label"
-                  placeholder="1600 Amphitheatre Pkwy"
-                  autoComplete="off"
-                  className="w-80 max-w-full"
-                  onKeyDown={(event) => {
-                    // cmdk preventDefaults Enter on the Command root so it can
-                    // pick the highlighted item, which also swallows the form's
-                    // implicit submission. With no suggestions open there is
-                    // nothing to pick, so submit here instead.
-                    if (event.key === 'Enter' && suggestions.length === 0) {
-                      event.preventDefault();
-                      event.currentTarget.form?.requestSubmit();
-                    }
-                  }}
-                />
-              </CommandPrimitive.Input>
-            </PopoverAnchor>
+            <AddressField
+              value={address}
+              onValueChange={setAddress}
+              isOpen={suggestions.length > 0}
+            />
 
             <PopoverContent
               align="start"
