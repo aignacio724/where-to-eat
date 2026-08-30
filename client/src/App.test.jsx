@@ -491,6 +491,41 @@ describe('autocomplete behaviour', () => {
   });
 });
 
+/**
+ * cmdk moves focus to its list whenever the highlighted option changes, which
+ * suits a command palette but not an inline field: with a debounced remote
+ * list, the highlight changes on every pause in typing, so the address bar
+ * would lose focus mid-address and drop the next keystroke.
+ */
+describe('focus stays in the address field', () => {
+  test('keeps focus in the field when suggestions appear', async () => {
+    mockFetchSuggestions.mockResolvedValue({
+      suggestions: [{ placePrediction: { text: { text: '1600 Amphitheatre Pkwy' } } }],
+    });
+    vi.stubGlobal('fetch', mockRoutes({}));
+
+    render(<App />);
+    await userEvent.type(addressInput(), '1600');
+    await screen.findByRole('option', { name: /1600 Amphitheatre/i });
+
+    expect(addressInput()).toHaveFocus();
+  });
+
+  test('a space typed while the list is open lands in the field', async () => {
+    mockFetchSuggestions.mockResolvedValue({
+      suggestions: [{ placePrediction: { text: { text: '1600 Amphitheatre Pkwy' } } }],
+    });
+    vi.stubGlobal('fetch', mockRoutes({}));
+
+    render(<App />);
+    await userEvent.type(addressInput(), '1600');
+    await screen.findByRole('option', { name: /1600 Amphitheatre/i });
+
+    await userEvent.keyboard(' Amph');
+    expect(addressInput()).toHaveValue('1600 Amph');
+  });
+});
+
 describe('searching overlay', () => {
   /** A fetch whose /api/restaurants reply waits for the returned release fn. */
   function stallableRoutes() {
