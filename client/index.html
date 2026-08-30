@@ -5,6 +5,15 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>client</title>
+    <!-- shadcn's dark palette is behind a `.dark` class rather than a media
+         query. Set it here, before first paint, so the app still follows the
+         system preference and there is no light flash. -->
+    <script>
+      document.documentElement.classList.toggle(
+        'dark',
+        window.matchMedia('(prefers-color-scheme: dark)').matches
+      );
+    </script>
   </head>
   <body>
     <div id="root"></div>

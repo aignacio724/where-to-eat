@@ -359,13 +359,13 @@ describe('autocomplete guards', () => {
 
     render(<App />);
     await user.type(addressInput(), 'abc');
-    await screen.findByRole('button', { name: /1368 Daphne Dr/i });
+    await screen.findByRole('option', { name: /1368 Daphne Dr/i });
 
     await user.clear(addressInput());
     await user.type(addressInput(), 'a');
 
     await waitFor(() =>
-      expect(screen.queryByRole('button', { name: /1368 Daphne Dr/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('option', { name: /1368 Daphne Dr/i })).not.toBeInTheDocument()
     );
   });
 });
@@ -383,8 +383,8 @@ describe('autocomplete behaviour', () => {
     render(<App />);
     await userEvent.type(addressInput(), '1368 daphne');
 
-    expect(await screen.findByRole('button', { name: /1368 Daphne Dr/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /1368 Daphne Ct/i })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /1368 Daphne Dr/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /1368 Daphne Ct/i })).toBeInTheDocument();
   });
 
   test('picking a suggestion fills the input and closes the dropdown', async () => {
@@ -395,11 +395,11 @@ describe('autocomplete behaviour', () => {
 
     render(<App />);
     await userEvent.type(addressInput(), '1368 daphne');
-    await userEvent.click(await screen.findByRole('button', { name: /1368 Daphne Dr/i }));
+    await userEvent.click(await screen.findByRole('option', { name: /1368 Daphne Dr/i }));
 
     expect(addressInput()).toHaveValue('1368 Daphne Dr, San Jose, CA, USA');
     await waitFor(() =>
-      expect(screen.queryByRole('button', { name: /1368 Daphne Dr/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('option', { name: /1368 Daphne Dr/i })).not.toBeInTheDocument()
     );
   });
 
@@ -411,14 +411,53 @@ describe('autocomplete behaviour', () => {
 
     render(<App />);
     await userEvent.type(addressInput(), '1368 daphne');
-    await screen.findByRole('button', { name: /1368 Daphne Dr/i });
+    await screen.findByRole('option', { name: /1368 Daphne Dr/i });
 
     const callsBefore = mockFetchSuggestions.mock.calls.length;
-    await userEvent.click(screen.getByRole('button', { name: /1368 Daphne Dr/i }));
+    await userEvent.click(screen.getByRole('option', { name: /1368 Daphne Dr/i }));
 
     // Filling the input from a pick must not look like fresh typing.
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(mockFetchSuggestions.mock.calls.length).toBe(callsBefore);
+  });
+
+  test('arrow keys move through the suggestions and Enter picks one', async () => {
+    mockFetchSuggestions.mockResolvedValue({
+      suggestions: [
+        { placePrediction: { text: { text: '1368 Daphne Dr, San Jose, CA, USA' } } },
+        { placePrediction: { text: { text: '1368 Daphne Ct, East Palo Alto, CA, USA' } } },
+      ],
+    });
+    vi.stubGlobal('fetch', mockRoutes({}));
+
+    render(<App />);
+    await userEvent.type(addressInput(), '1368 daphne');
+    await screen.findByRole('option', { name: /1368 Daphne Dr/i });
+
+    // The list opens with the first option highlighted, so one ArrowDown
+    // lands on the second.
+    await userEvent.keyboard('{ArrowDown}{Enter}');
+
+    expect(addressInput()).toHaveValue('1368 Daphne Ct, East Palo Alto, CA, USA');
+  });
+
+  test('Escape dismisses the suggestions without submitting', async () => {
+    mockFetchSuggestions.mockResolvedValue({
+      suggestions: [{ placePrediction: { text: { text: '1368 Daphne Dr, San Jose, CA, USA' } } }],
+    });
+    const fetchMock = mockRoutes({});
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<App />);
+    await userEvent.type(addressInput(), '1368 daphne');
+    await screen.findByRole('option', { name: /1368 Daphne Dr/i });
+
+    await userEvent.keyboard('{Escape}');
+
+    await waitFor(() =>
+      expect(screen.queryByRole('option', { name: /1368 Daphne Dr/i })).not.toBeInTheDocument()
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test('a suggestions failure still leaves the address searchable', async () => {
@@ -446,8 +485,73 @@ describe('autocomplete behaviour', () => {
     render(<App />);
     await userEvent.type(addressInput(), '1368 daphne');
 
-    await screen.findByRole('button', { name: /1368 Daphne Dr/i });
+    await screen.findByRole('option', { name: /1368 Daphne Dr/i });
     // Only the usable one renders; the malformed entries are filtered out.
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+  });
+});
+
+describe('searching overlay', () => {
+  /** A fetch whose /api/restaurants reply waits for the returned release fn. */
+  function stallableRoutes() {
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+
+    const fetchMock = vi.fn(async (url) => {
+      if (url === '/api/geocode') return jsonResponse({ ...SF });
+      if (url === '/api/restaurants') {
+        await gate;
+        return jsonResponse(PLACES_BODY);
+      }
+      throw new Error(`unexpected fetch to ${url}`);
+    });
+
+    return { fetchMock, release };
+  }
+
+  test('shows the spinner while a search is in flight and hides it after', async () => {
+    const { fetchMock, release } = stallableRoutes();
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<App />);
+    await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
+    await userEvent.click(searchButton());
+
+    expect(await screen.findByRole('status')).toBeInTheDocument();
+
+    await act(async () => {
+      release();
+    });
+
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+  });
+
+  test('leaves the map mounted underneath while a repeat search runs', async () => {
+    // First search runs to completion, so a map exists to search from again.
+    vi.stubGlobal('fetch', mockRoutes({}));
+
+    render(<App />);
+    await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
+    await userEvent.click(searchButton());
+    await screen.findByTestId('map');
+
+    // Second search stalls, so the overlay is up while the map should persist.
+    const { fetchMock, release } = stallableRoutes();
+    vi.stubGlobal('fetch', fetchMock);
+    await userEvent.click(searchButton());
+
+    expect(await screen.findByRole('status')).toBeInTheDocument();
+    // Unmounting here would re-instantiate the Google map, throwing away the
+    // user's pan/zoom and billing another dynamic map load.
+    expect(screen.getByTestId('map')).toBeInTheDocument();
+
+    await act(async () => {
+      release();
+    });
+
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+    expect(screen.getByTestId('map')).toBeInTheDocument();
   });
 });
