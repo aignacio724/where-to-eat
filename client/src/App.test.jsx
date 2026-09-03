@@ -74,7 +74,19 @@ function denyGeolocation(message = 'User denied Geolocation') {
 
 const findButton = () => screen.getByRole('button', { name: /find food near me/i });
 const searchButton = () => screen.getByRole('button', { name: /^search$/i });
-const addressInput = () => screen.getByLabelText(/enter an address/i);
+const addressInput = () => screen.getByLabelText(/address as starting point/i);
+
+/**
+ * Renders and walks through a geolocation denial, which is what puts the
+ * address field on screen. Most specs below are about the address path, so
+ * they all need this preamble; the denial itself is asserted separately.
+ */
+async function renderWithAddressField() {
+  denyGeolocation();
+  render(<App />);
+  await userEvent.click(findButton());
+  await screen.findByLabelText(/address as starting point/i);
+}
 
 beforeEach(() => {
   mockFetchSuggestions.mockReset();
@@ -88,6 +100,19 @@ afterEach(() => {
 });
 
 describe('geolocation path', () => {
+  test('offers only the location button before anything is asked of the user', async () => {
+    grantGeolocation();
+    vi.stubGlobal('fetch', mockRoutes({}));
+
+    render(<App />);
+
+    // The address box is the fallback for a denial, so it must not be
+    // competing with the button on the landing page.
+    expect(findButton()).toBeInTheDocument();
+    expect(screen.queryByLabelText(/address as starting point/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^search$/i })).not.toBeInTheDocument();
+  });
+
   test('searches restaurants at the reported coordinates', async () => {
     grantGeolocation();
     const fetchMock = mockRoutes({});
@@ -126,6 +151,9 @@ describe('geolocation path', () => {
     // reason that fallback exists.
     expect(await screen.findByText(/enter an address instead/i)).toBeInTheDocument();
     expect(screen.getByText(/user denied geolocation/i)).toBeInTheDocument();
+    // ...and the box it points at has to actually be there now.
+    expect(addressInput()).toBeInTheDocument();
+    expect(addressInput()).toHaveFocus();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -139,6 +167,7 @@ describe('geolocation path', () => {
     expect(
       await screen.findByText(/does not support location services/i)
     ).toBeInTheDocument();
+    expect(addressInput()).toBeInTheDocument();
   });
 
   test('re-enables the buttons after a denial so the user is not stuck', async () => {
@@ -159,7 +188,7 @@ describe('address path', () => {
     const fetchMock = mockRoutes({});
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
     await userEvent.click(searchButton());
 
@@ -173,11 +202,9 @@ describe('address path', () => {
   });
 
   test('works without geolocation ever being granted', async () => {
-    denyGeolocation();
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
-    await userEvent.click(findButton());
+    await renderWithAddressField();
     await screen.findByText(/enter an address instead/i);
 
     // The denial must not poison the address path.
@@ -191,7 +218,7 @@ describe('address path', () => {
     const fetchMock = mockRoutes({});
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.click(searchButton());
 
     expect(await screen.findByText(/enter an address to search/i)).toBeInTheDocument();
@@ -202,7 +229,7 @@ describe('address path', () => {
     const fetchMock = mockRoutes({});
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy{Enter}');
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/geocode', expect.anything()));
@@ -215,7 +242,7 @@ describe('server error handling', () => {
       geocode: jsonResponse({ error: 'No results found for that address' }, { ok: false, status: 404 }),
     }));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), 'asdfghjkl qwerty');
     await userEvent.click(searchButton());
 
@@ -230,7 +257,7 @@ describe('server error handling', () => {
       ),
     }));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
     await userEvent.click(searchButton());
 
@@ -245,7 +272,7 @@ describe('server error handling', () => {
       ),
     }));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), 'x'.repeat(5));
     await userEvent.click(searchButton());
 
@@ -257,7 +284,7 @@ describe('server error handling', () => {
       throw new TypeError('NetworkError when attempting to fetch resource.');
     }));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
     await userEvent.click(searchButton());
 
@@ -275,7 +302,7 @@ describe('server error handling', () => {
       },
     }));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
     await userEvent.click(searchButton());
 
@@ -289,7 +316,7 @@ describe('server error handling', () => {
       .mockResolvedValue(jsonResponse({ ...SF }));
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), 'asdfghjkl');
     await userEvent.click(searchButton());
     await screen.findByText(/no results found/i);
@@ -319,7 +346,7 @@ describe('autocomplete guards', () => {
     const user = typist();
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await user.type(addressInput(), 'ab');
     await act(pastDebounce);
 
@@ -331,7 +358,7 @@ describe('autocomplete guards', () => {
     const user = typist();
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await user.type(addressInput(), 'abc');
 
     await waitFor(() => expect(mockFetchSuggestions).toHaveBeenCalledWith({ input: 'abc' }));
@@ -341,7 +368,7 @@ describe('autocomplete guards', () => {
     const user = typist();
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await user.type(addressInput(), '1368 daphne');
     await act(pastDebounce);
 
@@ -357,7 +384,7 @@ describe('autocomplete guards', () => {
       suggestions: [{ placePrediction: { text: { text: '1368 Daphne Dr, San Jose, CA, USA' } } }],
     });
 
-    render(<App />);
+    await renderWithAddressField();
     await user.type(addressInput(), 'abc');
     await screen.findByRole('option', { name: /1368 Daphne Dr/i });
 
@@ -380,7 +407,7 @@ describe('autocomplete behaviour', () => {
     });
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1368 daphne');
 
     expect(await screen.findByRole('option', { name: /1368 Daphne Dr/i })).toBeInTheDocument();
@@ -393,7 +420,7 @@ describe('autocomplete behaviour', () => {
     });
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1368 daphne');
     await userEvent.click(await screen.findByRole('option', { name: /1368 Daphne Dr/i }));
 
@@ -409,7 +436,7 @@ describe('autocomplete behaviour', () => {
     });
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1368 daphne');
     await screen.findByRole('option', { name: /1368 Daphne Dr/i });
 
@@ -430,7 +457,7 @@ describe('autocomplete behaviour', () => {
     });
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1368 daphne');
     await screen.findByRole('option', { name: /1368 Daphne Dr/i });
 
@@ -448,7 +475,7 @@ describe('autocomplete behaviour', () => {
     const fetchMock = mockRoutes({});
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1368 daphne');
     await screen.findByRole('option', { name: /1368 Daphne Dr/i });
 
@@ -465,7 +492,7 @@ describe('autocomplete behaviour', () => {
     const fetchMock = mockRoutes({});
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
     await userEvent.click(searchButton());
 
@@ -482,7 +509,7 @@ describe('autocomplete behaviour', () => {
     });
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1368 daphne');
 
     await screen.findByRole('option', { name: /1368 Daphne Dr/i });
@@ -504,7 +531,7 @@ describe('focus stays in the address field', () => {
     });
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600');
     await screen.findByRole('option', { name: /1600 Amphitheatre/i });
 
@@ -517,7 +544,7 @@ describe('focus stays in the address field', () => {
     });
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600');
     await screen.findByRole('option', { name: /1600 Amphitheatre/i });
 
@@ -550,7 +577,7 @@ describe('searching overlay', () => {
     const { fetchMock, release } = stallableRoutes();
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
     await userEvent.click(searchButton());
 
@@ -567,7 +594,7 @@ describe('searching overlay', () => {
     // First search runs to completion, so a map exists to search from again.
     vi.stubGlobal('fetch', mockRoutes({}));
 
-    render(<App />);
+    await renderWithAddressField();
     await userEvent.type(addressInput(), '1600 Amphitheatre Pkwy');
     await userEvent.click(searchButton());
     await screen.findByTestId('map');

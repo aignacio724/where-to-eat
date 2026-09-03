@@ -52,6 +52,10 @@ app.post("/api/restaurants", async (req, res) => {
       body: JSON.stringify({
         includedTypes: ["restaurant"],
         maxResultCount: MAX_RESULT_COUNT,
+        // Without this the API defaults to POPULARITY, which returns the 20
+        // most popular places anywhere in the circle -- nearby but quieter
+        // restaurants get pushed out by well-known ones near the radius edge.
+        rankPreference: "DISTANCE",
         locationRestriction: {
           circle: {
             center: { latitude, longitude },
