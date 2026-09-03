@@ -2,16 +2,16 @@
 
 ## Landing page and pick flow
 
-- [ ] **Don't load the Google map on first page load.** Defer the Maps JS script
+- [x] **Don't load the Google map on first page load.** Defer the Maps JS script
       until there is something to show — loading it up front bills a Dynamic Maps
       load for every visitor, including ones who never search.
-- [ ] Add a description on the landing page:
+- [x] Add a description on the landing page:
 
       > Can't decide where to eat? Endlessly scrolling a list or cycling through
       > points on a map? Let me pick for you. Indecisive? I'll keep picking until
       > there's only one place to eat
 
-- [ ] Show only the "Find a place to eat" button and the address input on the
+- [x] Show only the "Find a place to eat" button and the address input on the
       landing page. Everything else appears after a search.
 - [ ] Add a "Picking for you" animation while the search runs, then reveal the
       map with the results.

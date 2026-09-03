@@ -33,7 +33,7 @@ async function errorMessageFrom(response, fallback) {
  * The address field, and the anchor the suggestion popover positions itself
  * against. Split out from the form purely for readability.
  */
-function AddressField({ value, onValueChange, isOpen }) {
+function AddressField({ value, onValueChange, isOpen, autoFocus }) {
   return (
     <PopoverAnchor asChild>
       {/* asChild keeps a real <input> in the form, so Enter still submits
@@ -52,8 +52,11 @@ function AddressField({ value, onValueChange, isOpen }) {
           // field would lose focus mid-address and swallow the next keystroke.
           // cmdk reads this attribute nowhere else.
           cmdk-input={undefined}
-          placeholder="1600 Amphitheatre Pkwy"
+          placeholder="Enter address as starting point"
           autoComplete="off"
+          // The field only mounts once location has been declined, so taking
+          // focus on mount lands the user straight in their fallback.
+          autoFocus={autoFocus}
           className="w-80 max-w-full"
           onKeyDown={(event) => {
             // cmdk preventDefaults Enter on the Command root so it can pick the
@@ -80,6 +83,10 @@ function RestaurantFinder() {
   const [address, setAddress] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  // The address box is the fallback for whoever will not (or cannot) share
+  // their location, so it stays out of the way until that happens. Once
+  // revealed it stays: a denial is not something the user retracts mid-visit.
+  const [showAddressSearch, setShowAddressSearch] = useState(false);
   // Controlled camera: the Map needs onCameraChanged alongside center/zoom,
   // otherwise it pins the view and panning snaps back.
   const [cameraProps, setCameraProps] = useState({
@@ -166,6 +173,7 @@ function RestaurantFinder() {
 
     if (!navigator.geolocation) {
       setError("This browser does not support location services. Enter an address instead.");
+      setShowAddressSearch(true);
       return;
     }
 
@@ -179,6 +187,7 @@ function RestaurantFinder() {
       },
       (positionError) => {
         setError(`Could not get your location (${positionError.message}). Enter an address instead.`);
+        setShowAddressSearch(true);
         setIsSearching(false);
       }
     );
@@ -225,62 +234,76 @@ function RestaurantFinder() {
 
   return (
     <div className="p-5">
-      <Button onClick={findRestaurants} disabled={isSearching}>
-        Find Food Near Me
-      </Button>
-
-       <form onSubmit={searchByAddress} className="mt-3">
-        <Label htmlFor="address" id="address-label" className="mb-1">
-          ...or enter an address:
-        </Label>
-
-        {/* Command drives the keyboard behaviour (arrows move the highlight,
-            Enter picks it); the Popover positions the list against the input.
-            shouldFilter is off because the Places API has already filtered --
-            cmdk's own fuzzy match would discard perfectly good predictions. */}
-        {/* The class overrides undo Command's full-size palette styling; here
-            it is only a keyboard-behaviour wrapper around a normal input. */}
-        <Command
-          shouldFilter={false}
-          className="inline-block size-auto overflow-visible bg-transparent p-0 text-inherit"
-        >
-          <Popover
-            open={suggestions.length > 0}
-            onOpenChange={(isOpen) => {
-              if (!isOpen) setSuggestions([]);
-            }}
-          >
-            <AddressField
-              value={address}
-              onValueChange={setAddress}
-              isOpen={suggestions.length > 0}
-            />
-
-            <PopoverContent
-              align="start"
-              className="w-(--radix-popover-trigger-width) p-0"
-              // The list is an extension of the input, so focus has to stay
-              // in the input while arrowing through it.
-              onOpenAutoFocus={(event) => event.preventDefault()}
-              onCloseAutoFocus={(event) => event.preventDefault()}
-            >
-              <CommandList>
-                {suggestions.map((text) => (
-                  <CommandItem key={text} value={text} onSelect={() => pickSuggestion(text)}>
-                    {text}
-                  </CommandItem>
-                ))}
-              </CommandList>
-            </PopoverContent>
-          </Popover>
-        </Command>
-
-        <Button type="submit" disabled={isSearching} className="ml-2">
-          Search
+      {/* The button is the whole landing page until a search happens, so it
+          sits centered at the top with the fallback stacked underneath it. */}
+      <div className="flex flex-col items-center gap-3">
+        <p>
+        Can&apos;t decide where to eat? Endlessly scrolling a list or cycling through
+        points on a map? Let me pick for you. Indecisive? I'll keep picking until
+        there's only one place to eat
+        </p>
+        <Button onClick={findRestaurants} disabled={isSearching}>
+          Find Food Near Me
         </Button>
-      </form>
 
-      {error && <p className="mt-3 text-destructive">{error}</p>}
+        {showAddressSearch && (
+        <form onSubmit={searchByAddress} className="flex items-start justify-center gap-2">
+          {/* The placeholder already says what the field is for, so the label
+              is here for screen readers rather than repeating it on screen. */}
+          <Label htmlFor="address" id="address-label" className="sr-only">
+            Enter address as starting point
+          </Label>
+
+          {/* Command drives the keyboard behaviour (arrows move the highlight,
+              Enter picks it); the Popover positions the list against the input.
+              shouldFilter is off because the Places API has already filtered --
+              cmdk's own fuzzy match would discard perfectly good predictions. */}
+          {/* The class overrides undo Command's full-size palette styling; here
+              it is only a keyboard-behaviour wrapper around a normal input. */}
+          <Command
+            shouldFilter={false}
+            className="inline-block size-auto overflow-visible bg-transparent p-0 text-inherit"
+          >
+            <Popover
+              open={suggestions.length > 0}
+              onOpenChange={(isOpen) => {
+                if (!isOpen) setSuggestions([]);
+              }}
+            >
+              <AddressField
+                value={address}
+                onValueChange={setAddress}
+                isOpen={suggestions.length > 0}
+                autoFocus
+              />
+
+              <PopoverContent
+                align="start"
+                className="w-(--radix-popover-trigger-width) p-0"
+                // The list is an extension of the input, so focus has to stay
+                // in the input while arrowing through it.
+                onOpenAutoFocus={(event) => event.preventDefault()}
+                onCloseAutoFocus={(event) => event.preventDefault()}
+              >
+                <CommandList>
+                  {suggestions.map((text) => (
+                    <CommandItem key={text} value={text} onSelect={() => pickSuggestion(text)}>
+                      {text}
+                    </CommandItem>
+                  ))}
+                </CommandList>
+              </PopoverContent>
+            </Popover>
+          </Command>
+
+          <Button type="submit" disabled={isSearching}>
+            Search
+          </Button>
+        </form>
+        )}
+
+        {error && <p className="text-center text-destructive">{error}</p>}
+      </div>
 
       {/* This slot holds the map and, on top of it, the searching overlay. The
           two are siblings rather than branches of a ternary so that a repeat

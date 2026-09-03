@@ -90,6 +90,7 @@ test.describe("POST /api/restaurants", () => {
       assert.deepEqual(requestBodyOf(fetchMock), {
         includedTypes: ["restaurant"],
         maxResultCount: MAX_RESULT_COUNT,
+        rankPreference: "DISTANCE",
         locationRestriction: {
           circle: {
             center: { latitude: SF.latitude, longitude: SF.longitude },
