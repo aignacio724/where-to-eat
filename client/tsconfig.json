@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  // The shadcn CLI reads the `@/` alias from here, not from the referenced
+  // configs, so it is repeated in tsconfig.app.json and vite.config.ts.
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

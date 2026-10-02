@@ -1,15 +1,15 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const express = require("express");
-const request = require("supertest");
+import test from "node:test";
+import assert from "node:assert/strict";
+import express from "express";
+import request from "supertest";
 
-const { app, TEST_API_KEY, fakeResponse, mockFetch, resetRateLimit } = require("./helpers");
-const { createApiLimiter, MAX_REQUESTS } = require("../rateLimit");
+import { app, TEST_API_KEY, fakeResponse, mockFetch, resetRateLimit } from "./helpers.ts";
+import { createApiLimiter, MAX_REQUESTS } from "../rateLimit.ts";
 
 const SF = { latitude: 37.7749, longitude: -122.4194 };
 
 /** A throwaway app wrapping its own limiter, so the shared one is untouched. */
-function appWithLimit(max) {
+function appWithLimit(max: number) {
   const { limiter } = createApiLimiter({ windowMs: 60_000, max });
   const testApp = express();
 
@@ -72,7 +72,7 @@ test.describe("api rate limiting", () => {
   });
 
   test.describe("wired into the real app", () => {
-    let originalKey;
+    let originalKey: string | undefined;
 
     test.beforeEach(() => {
       resetRateLimit();

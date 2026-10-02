@@ -3,14 +3,18 @@
   "private": true,
   "version": "1.0.0",
   "description": "Express API for where-to-eat",
-  "main": "server.js",
-  "type": "commonjs",
+  "main": "server.ts",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
-    "dev": "node --watch server.js",
-    "start": "node server.js",
-    "test": "node --test test/*.test.js",
-    "test:watch": "node --test --watch test/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
+    "dev": "node --watch server.ts",
+    "start": "node server.ts",
+    "test": "node --test test/*.test.ts",
+    "test:watch": "node --test --watch test/*.test.ts",
+    "test:coverage": "node --test --experimental-test-coverage test/*.test.ts",
+    "typecheck": "tsc"
   },
   "license": "ISC",
   "dependencies": {
@@ -20,6 +24,10 @@
     "express-rate-limit": "^8.6.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.4",
+    "@types/supertest": "^7.2.1",
     "supertest": "^7.1.4"
   }
 }

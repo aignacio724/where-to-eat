@@ -1,7 +1,7 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
+import test from "node:test";
+import assert from "node:assert/strict";
 
-const { validateAddress, ADDRESS_MAX_LENGTH } = require("../address");
+import { validateAddress, ADDRESS_MAX_LENGTH } from "../address.ts";
 
 test.describe("validateAddress", () => {
   test("accepts a normal address", () => {
@@ -29,7 +29,7 @@ test.describe("validateAddress", () => {
   });
 
   test.describe("rejects missing or non-string values", () => {
-    const badValues = [
+    const badValues: [label: string, value: unknown][] = [
       ["missing", undefined],
       ["empty string", ""],
       ["whitespace only", "   "],

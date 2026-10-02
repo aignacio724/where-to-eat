@@ -5,17 +5,17 @@ const LONGITUDE_MAX = 180;
 
 // Note: `typeof NaN === "number"`, so Number.isFinite is the real check here.
 // It also rejects strings, null, booleans and Infinity.
-function isFiniteNumberInRange(value, min, max) {
-  return Number.isFinite(value) && value >= min && value <= max;
+function isFiniteNumberInRange(value: unknown, min: number, max: number): boolean {
+  return Number.isFinite(value) && (value as number) >= min && (value as number) <= max;
 }
 
 /**
  * Validates a latitude/longitude pair from a request body.
  * Returns an array of human-readable problems; an empty array means valid.
  */
-function validateCoordinates(body) {
-  const { latitude, longitude } = body ?? {};
-  const details = [];
+export function validateCoordinates(body: unknown): string[] {
+  const { latitude, longitude } = (body ?? {}) as { latitude?: unknown; longitude?: unknown };
+  const details: string[] = [];
 
   if (!isFiniteNumberInRange(latitude, LATITUDE_MIN, LATITUDE_MAX)) {
     details.push(
@@ -31,5 +31,3 @@ function validateCoordinates(body) {
 
   return details;
 }
-
-module.exports = { validateCoordinates };
