@@ -1,15 +1,16 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const request = require("supertest");
+import test from "node:test";
+import assert from "node:assert/strict";
+import request from "supertest";
 
-const {
+import {
   app,
   TEST_API_KEY,
   fakeResponse,
   mockFetch,
   resetRateLimit,
-} = require("./helpers");
-const { GEOCODE_URL } = require("../app");
+  type FetchMock,
+} from "./helpers.ts";
+import { GEOCODE_URL } from "../app.ts";
 
 const ADDRESS = "1600 Amphitheatre Pkwy, Mountain View, CA";
 
@@ -23,13 +24,13 @@ const GEOCODE_PAYLOAD = {
   ],
 };
 
-/** Reads the URL app.js handed to fetch. */
-function requestUrlOf(fetchMock, callIndex = 0) {
-  return fetchMock.mock.calls[callIndex].arguments[0];
+/** Reads the URL app.ts handed to fetch. */
+function requestUrlOf(fetchMock: FetchMock, callIndex = 0) {
+  return fetchMock.mock.calls[callIndex].arguments[0] as string;
 }
 
 test.describe("POST /api/geocode", () => {
-  let originalKey;
+  let originalKey: string | undefined;
 
   test.beforeEach(() => {
     // Counters are shared across the whole suite, so clear them per test

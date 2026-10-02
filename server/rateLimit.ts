@@ -1,7 +1,7 @@
-const { rateLimit, MemoryStore, MINUTE } = require("express-rate-limit");
+import { rateLimit, MemoryStore, MINUTE } from "express-rate-limit";
 
-const WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS) || MINUTE;
-const MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX) || 30;
+export const WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS) || MINUTE;
+export const MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX) || 30;
 
 /**
  * Builds a limiter for the /api routes. Both of them spend real money at
@@ -11,7 +11,10 @@ const MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX) || 30;
  * The store is created here rather than left implicit so tests can reset it
  * between cases instead of having to disable rate limiting outright.
  */
-function createApiLimiter({ windowMs = WINDOW_MS, max = MAX_REQUESTS } = {}) {
+export function createApiLimiter({
+  windowMs = WINDOW_MS,
+  max = MAX_REQUESTS,
+}: { windowMs?: number; max?: number } = {}) {
   const store = new MemoryStore();
 
   const limiter = rateLimit({
@@ -33,15 +36,9 @@ function createApiLimiter({ windowMs = WINDOW_MS, max = MAX_REQUESTS } = {}) {
 
 const { limiter: apiLimiter, store: apiLimiterStore } = createApiLimiter();
 
+export { apiLimiter };
+
 /** Clears all counters. Used by tests so one case cannot exhaust the next. */
-function resetRateLimit() {
+export function resetRateLimit() {
   apiLimiterStore.resetAll();
 }
-
-module.exports = {
-  createApiLimiter,
-  apiLimiter,
-  resetRateLimit,
-  WINDOW_MS,
-  MAX_REQUESTS,
-};

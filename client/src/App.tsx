@@ -1,5 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { APIProvider, Map, AdvancedMarker, Pin, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { useEffect, useRef, useState, type SubmitEvent } from 'react';
+import {
+  APIProvider,
+  Map,
+  AdvancedMarker,
+  Pin,
+  useMapsLibrary,
+  type MapCameraProps,
+} from '@vis.gl/react-google-maps';
 // cmdk's raw Input is what supports `asChild`; the shadcn CommandInput wrapper
 // bakes in its own search-icon chrome, which this inline field does not want.
 import { Command as CommandPrimitive } from 'cmdk';
@@ -19,12 +26,26 @@ const SUGGESTION_DEBOUNCE_MS = 300;
 // anyway, so they are not worth sending.
 const MIN_SUGGESTION_LENGTH = 3;
 
+/** A place as /api/restaurants returns it, trimmed by the server's field mask. */
+interface Place {
+  displayName: { text: string };
+  formattedAddress?: string;
+  rating?: number;
+  location: { latitude: number; longitude: number };
+}
+
+/** The shape both /api routes answer errors with. */
+interface ApiError {
+  error?: string;
+  details?: string[];
+}
+
 /**
  * Reads the JSON error a route returned, falling back to `fallback` when the
  * body is missing or unreadable. Both /api routes answer with { error, details? }.
  */
-async function errorMessageFrom(response, fallback) {
-  const body = await response.json().catch(() => ({}));
+async function errorMessageFrom(response: Response, fallback: string): Promise<string> {
+  const body: ApiError = await response.json().catch(() => ({}));
   const details = body.details?.length ? `: ${body.details.join(", ")}` : "";
   return (body.error || fallback) + details;
 }
@@ -33,7 +54,17 @@ async function errorMessageFrom(response, fallback) {
  * The address field, and the anchor the suggestion popover positions itself
  * against. Split out from the form purely for readability.
  */
-function AddressField({ value, onValueChange, isOpen, autoFocus }) {
+function AddressField({
+  value,
+  onValueChange,
+  isOpen,
+  autoFocus,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  isOpen: boolean;
+  autoFocus?: boolean;
+}) {
   return (
     <PopoverAnchor asChild>
       {/* asChild keeps a real <input> in the form, so Enter still submits
@@ -77,11 +108,11 @@ function AddressField({ value, onValueChange, isOpen, autoFocus }) {
 // useMapsLibrary reads APIProvider's context, so it cannot live in the
 // component that renders APIProvider — hence this inner component.
 function RestaurantFinder() {
-  const [restaurants, setRestaurants] = useState([]);
-  const [userLocation, setUserLocation] = useState(null); // Don't load map until after location is given
-  const [error, setError] = useState(null);
+  const [restaurants, setRestaurants] = useState<Place[]>([]);
+  const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null); // Don't load map until after location is given
+  const [error, setError] = useState<string | null>(null);
   const [address, setAddress] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   // The address box is the fallback for whoever will not (or cannot) share
   // their location, so it stays out of the way until that happens. Once
@@ -89,7 +120,7 @@ function RestaurantFinder() {
   const [showAddressSearch, setShowAddressSearch] = useState(false);
   // Controlled camera: the Map needs onCameraChanged alongside center/zoom,
   // otherwise it pins the view and panning snaps back.
-  const [cameraProps, setCameraProps] = useState({
+  const [cameraProps, setCameraProps] = useState<MapCameraProps>({
     center: DEFAULT_CENTER,
     zoom: DEFAULT_ZOOM,
   });
@@ -127,7 +158,7 @@ function RestaurantFinder() {
         setSuggestions(
           results
             .map((suggestion) => suggestion.placePrediction?.text?.text)
-            .filter(Boolean)
+            .filter((text): text is string => Boolean(text))
         );
       } catch {
         // Suggestions are a convenience; a failure here must not block the
@@ -143,12 +174,12 @@ function RestaurantFinder() {
   }, [places, address]);
 
   /** Shared tail of both entry points: recenter, then search from a coordinate. */
-  const searchRestaurantsAt = async (latitude, longitude) => {
+  const searchRestaurantsAt = async (latitude: number, longitude: number) => {
     setUserLocation({ lat: latitude, lng: longitude });
     setCameraProps((props) => ({ ...props, center: { lat: latitude, lng: longitude } }));
 
     // Relative URL so Vite's dev proxy forwards this to the Express
-    // server (see vite.config.js). Same-origin, so no CORS involved.
+    // server (see vite.config.ts). Same-origin, so no CORS involved.
     try {
       const response = await fetch("/api/restaurants", {
         method: "POST",
@@ -193,7 +224,7 @@ function RestaurantFinder() {
     );
   };
 
-  const searchByAddress = async (event) => {
+  const searchByAddress = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
 
@@ -226,7 +257,7 @@ function RestaurantFinder() {
     }
   };
 
-  const pickSuggestion = (text) => {
+  const pickSuggestion = (text: string) => {
     skipNextSuggestionFetch.current = true;
     setAddress(text);
     setSuggestions([]);

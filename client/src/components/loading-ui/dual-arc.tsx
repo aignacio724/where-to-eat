@@ -1,10 +1,12 @@
+import type { ComponentProps } from "react";
+
 import { cn } from "@/lib/utils";
 
 function DualArc({
   className,
   style,
   ...props
-}) {
+}: ComponentProps<"div">) {
   return (
     <>
       <style>{`

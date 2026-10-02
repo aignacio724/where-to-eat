@@ -1,8 +1,9 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 
-import App from './App.jsx';
+import App from './App.tsx';
 
 /**
  * Stub the Google bindings. Without this, APIProvider tries to inject the Maps
@@ -12,11 +13,11 @@ import App from './App.jsx';
 const mockFetchSuggestions = vi.fn();
 
 vi.mock('@vis.gl/react-google-maps', () => ({
-  APIProvider: ({ children }) => children,
-  Map: ({ children }) => <div data-testid="map">{children}</div>,
+  APIProvider: ({ children }: { children: ReactNode }) => children,
+  Map: ({ children }: { children: ReactNode }) => <div data-testid="map">{children}</div>,
   // Only restaurant markers carry a title; the user's pin does not. Splitting
   // them here keeps the counts in the tests unambiguous.
-  AdvancedMarker: ({ title, children }) => (
+  AdvancedMarker: ({ title, children }: { title?: string; children?: ReactNode }) => (
     <div data-testid={title ? 'restaurant-marker' : 'user-marker'} data-title={title}>
       {children}
     </div>
@@ -24,7 +25,7 @@ vi.mock('@vis.gl/react-google-maps', () => ({
   Pin: () => <div data-testid="pin" />,
   useMapsLibrary: () => ({
     AutocompleteSuggestion: {
-      fetchAutocompleteSuggestions: (...args) => mockFetchSuggestions(...args),
+      fetchAutocompleteSuggestions: (...args: unknown[]) => mockFetchSuggestions(...args),
     },
   }),
 }));
@@ -44,30 +45,44 @@ const PLACES_BODY = {
   ],
 };
 
-/** Builds a Response-like object for the two fields App.jsx reads. */
-function jsonResponse(body, { ok = true, status = 200 } = {}) {
-  return { ok, status, json: async () => body };
+type FetchMock = Mock<typeof fetch>;
+
+/** Builds a Response-like object for the two fields App.tsx reads. */
+function jsonResponse(body: unknown, { ok = true, status = 200 } = {}) {
+  return { ok, status, json: async () => body } as Response;
 }
 
 /** Routes a mocked fetch by URL so a test can answer each endpoint separately. */
-function mockRoutes({ geocode, restaurants }) {
-  return vi.fn(async (url) => {
+function mockRoutes({ geocode, restaurants }: { geocode?: Response; restaurants?: Response }) {
+  return vi.fn<typeof fetch>(async (url) => {
     if (url === '/api/geocode') return geocode ?? jsonResponse({ ...SF });
     if (url === '/api/restaurants') return restaurants ?? jsonResponse(PLACES_BODY);
     throw new Error(`unexpected fetch to ${url}`);
   });
 }
 
+/** Parses the JSON body App sent to `url`, failing the test if it never did. */
+function bodySentTo(fetchMock: FetchMock, url: string) {
+  const call = fetchMock.mock.calls.find(([calledUrl]) => calledUrl === url);
+  if (!call) throw new Error(`expected a fetch to ${url}`);
+  const [, init] = call;
+  return JSON.parse(String(init?.body));
+}
+
 /** Installs a geolocation that succeeds with `coords`. */
 function grantGeolocation(coords = SF) {
-  const getCurrentPosition = vi.fn((onSuccess) => onSuccess({ coords }));
+  const getCurrentPosition = vi.fn((onSuccess: PositionCallback) =>
+    onSuccess({ coords } as GeolocationPosition)
+  );
   vi.stubGlobal('navigator', { ...navigator, geolocation: { getCurrentPosition } });
   return getCurrentPosition;
 }
 
 /** Installs a geolocation that invokes the error callback, as a denial does. */
 function denyGeolocation(message = 'User denied Geolocation') {
-  const getCurrentPosition = vi.fn((onSuccess, onError) => onError({ message }));
+  const getCurrentPosition = vi.fn((_onSuccess: PositionCallback, onError: PositionErrorCallback) =>
+    onError({ message } as GeolocationPositionError)
+  );
   vi.stubGlobal('navigator', { ...navigator, geolocation: { getCurrentPosition } });
   return getCurrentPosition;
 }
@@ -123,8 +138,7 @@ describe('geolocation path', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/restaurants', expect.anything()));
 
-    const [, init] = fetchMock.mock.calls.find(([url]) => url === '/api/restaurants');
-    expect(JSON.parse(init.body)).toEqual(SF);
+    expect(bodySentTo(fetchMock, '/api/restaurants')).toEqual(SF);
   });
 
   test('renders a marker per returned restaurant, plus the user pin', async () => {
@@ -194,11 +208,8 @@ describe('address path', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/restaurants', expect.anything()));
 
-    const [, geocodeInit] = fetchMock.mock.calls.find(([url]) => url === '/api/geocode');
-    expect(JSON.parse(geocodeInit.body)).toEqual({ address: '1600 Amphitheatre Pkwy' });
-
-    const [, searchInit] = fetchMock.mock.calls.find(([url]) => url === '/api/restaurants');
-    expect(JSON.parse(searchInit.body)).toEqual(SF);
+    expect(bodySentTo(fetchMock, '/api/geocode')).toEqual({ address: '1600 Amphitheatre Pkwy' });
+    expect(bodySentTo(fetchMock, '/api/restaurants')).toEqual(SF);
   });
 
   test('works without geolocation ever being granted', async () => {
@@ -294,8 +305,7 @@ describe('server error handling', () => {
   test('falls back to a generic message when the error body is unreadable', async () => {
     vi.stubGlobal('fetch', mockRoutes({
       geocode: {
-        ok: false,
-        status: 500,
+        ...jsonResponse(null, { ok: false, status: 500 }),
         json: async () => {
           throw new SyntaxError('Unexpected token < in JSON');
         },
@@ -556,12 +566,12 @@ describe('focus stays in the address field', () => {
 describe('searching overlay', () => {
   /** A fetch whose /api/restaurants reply waits for the returned release fn. */
   function stallableRoutes() {
-    let release;
-    const gate = new Promise((resolve) => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
 
-    const fetchMock = vi.fn(async (url) => {
+    const fetchMock = vi.fn<typeof fetch>(async (url) => {
       if (url === '/api/geocode') return jsonResponse({ ...SF });
       if (url === '/api/restaurants') {
         await gate;

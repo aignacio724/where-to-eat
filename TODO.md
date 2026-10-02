@@ -30,7 +30,7 @@
       API base URL. Relative `fetch("/api/...")` calls will 404 otherwise.
 - [ ] **`app.set("trust proxy", ...)`** — behind a reverse proxy every request
       appears to come from the proxy's IP, making the rate limit global rather
-      than per-client. See the comment in `server/app.js`.
+      than per-client. See the comment in `server/app.ts`.
 - [ ] **IP-restrict the server key** once it has a stable address. Deferred
       during local dev because residential IPs rotate.
 - [ ] Restrict the browser key: APIs (Maps JS + Places API New) and HTTP

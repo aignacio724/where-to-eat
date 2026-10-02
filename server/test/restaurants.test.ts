@@ -1,8 +1,8 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const request = require("supertest");
+import test from "node:test";
+import assert from "node:assert/strict";
+import request from "supertest";
 
-const {
+import {
   app,
   TEST_API_KEY,
   fakeResponse,
@@ -10,8 +10,8 @@ const {
   requestBodyOf,
   requestHeadersOf,
   resetRateLimit,
-} = require("./helpers");
-const { MAX_RESULT_COUNT, RADIUS, PLACES_URL, FIELD_MASK } = require("../app");
+} from "./helpers.ts";
+import { MAX_RESULT_COUNT, RADIUS, PLACES_URL, FIELD_MASK } from "../app.ts";
 
 const SF = { latitude: 37.7749, longitude: -122.4194 };
 
@@ -33,7 +33,7 @@ const PLACES_PAYLOAD = {
 };
 
 test.describe("POST /api/restaurants", () => {
-  let originalKey;
+  let originalKey: string | undefined;
 
   test.beforeEach(() => {
     // Counters are shared across the whole suite, so clear them per test
@@ -74,7 +74,7 @@ test.describe("POST /api/restaurants", () => {
 
       const [url, init] = fetchMock.mock.calls[0].arguments;
       assert.equal(url, PLACES_URL);
-      assert.equal(init.method, "POST");
+      assert.equal(init?.method, "POST");
 
       const headers = requestHeadersOf(fetchMock);
       assert.equal(headers["Content-Type"], "application/json");

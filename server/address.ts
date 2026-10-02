@@ -1,12 +1,12 @@
-const ADDRESS_MAX_LENGTH = 250;
+export const ADDRESS_MAX_LENGTH = 250;
 
 /**
  * Validates a free-text address from a request body.
  * Returns an array of human-readable problems; an empty array means valid.
  */
-function validateAddress(body) {
-  const { address } = body ?? {};
-  const details = [];
+export function validateAddress(body: unknown): string[] {
+  const { address } = (body ?? {}) as { address?: unknown };
+  const details: string[] = [];
 
   if (typeof address !== "string" || address.trim() === "") {
     details.push("address is required and must be a non-empty string");
@@ -16,5 +16,3 @@ function validateAddress(body) {
 
   return details;
 }
-
-module.exports = { validateAddress, ADDRESS_MAX_LENGTH };

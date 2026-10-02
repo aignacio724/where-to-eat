@@ -17,7 +17,8 @@
     "test": "npm run test --workspaces --if-present",
     "test:server": "npm run test --workspace=server",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "typecheck": "npm run typecheck --workspaces"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,8 @@
     "eslint": "^10.9.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
-    "globals": "^17.11.0"
+    "globals": "^17.11.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.0"
   }
 }
