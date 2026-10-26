@@ -1,0 +1,30 @@
+{
+  // Type-checking only: Vite compiles the code, so nothing is emitted here.
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+
+    // Files are converted one at a time; JS files stay in the program so
+    // converted files get types inferred from the ones not yet converted.
+    "allowJs": true,
+    "checkJs": false,
+
+    "strict": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+
+    // `@/` -> src/, the import prefix shadcn/ui components are generated with.
+    // Mirrors the alias in vite.config.js.
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom/vitest"]
+  },
+  "include": ["src"]
+}
