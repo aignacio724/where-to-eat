@@ -19,7 +19,7 @@
     "verbatimModuleSyntax": true,
 
     // `@/` -> src/, the import prefix shadcn/ui components are generated with.
-    // Mirrors the alias in vite.config.js.
+    // Mirrors the alias in vite.config.ts.
     "paths": {
       "@/*": ["./src/*"]
     },

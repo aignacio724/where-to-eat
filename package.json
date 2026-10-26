@@ -18,7 +18,7 @@
     "test:server": "npm run test --workspace=server",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc -p client && tsc -p server"
+    "typecheck": "tsc -p client && tsc -p client/tsconfig.node.json && tsc -p server"
   },
   "repository": {
     "type": "git",

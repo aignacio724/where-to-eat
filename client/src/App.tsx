@@ -162,7 +162,7 @@ function RestaurantFinder() {
     setCameraProps((props) => ({ ...props, center: { lat: latitude, lng: longitude } }));
 
     // Relative URL so Vite's dev proxy forwards this to the Express
-    // server (see vite.config.js). Same-origin, so no CORS involved.
+    // server (see vite.config.ts). Same-origin, so no CORS involved.
     try {
       const response = await fetch("/api/restaurants", {
         method: "POST",

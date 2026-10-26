@@ -1,3 +1,5 @@
+/// <reference types="vitest/config" />
+// The reference adds Vitest's `test` key to Vite's config type.
 import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
