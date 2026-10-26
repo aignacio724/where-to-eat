@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import App from './App.jsx';
+import App from './App';
 
 /**
  * Stub the Google bindings. Without this, APIProvider tries to inject the Maps
@@ -44,7 +44,7 @@ const PLACES_BODY = {
   ],
 };
 
-/** Builds a Response-like object for the two fields App.jsx reads. */
+/** Builds a Response-like object for the two fields App.tsx reads. */
 function jsonResponse(body, { ok = true, status = 200 } = {}) {
   return { ok, status, json: async () => body };
 }

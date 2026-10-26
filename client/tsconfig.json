@@ -24,7 +24,14 @@
       "@/*": ["./src/*"]
     },
 
-    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom/vitest"]
+    // google.maps: @vis.gl/react-google-maps uses the global `google` namespace
+    // without referencing it, so it has to be listed here to resolve.
+    "types": [
+      "vite/client",
+      "vitest/globals",
+      "@testing-library/jest-dom/vitest",
+      "google.maps"
+    ]
   },
   "include": ["src"]
 }

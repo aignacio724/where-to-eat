@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin, useMapsLibrary } from '@vis.gl/react-google-maps';
 // cmdk's raw Input is what supports `asChild`; the shadcn CommandInput wrapper
 // bakes in its own search-icon chrome, which this inline field does not want.
@@ -19,21 +19,35 @@ const SUGGESTION_DEBOUNCE_MS = 300;
 // anyway, so they are not worth sending.
 const MIN_SUGGESTION_LENGTH = 3;
 
+/** One Places result, as /api/restaurants passes it through. Only the fields read here. */
+interface Place {
+  displayName: { text: string };
+  location: { latitude: number; longitude: number };
+}
+
 /**
  * Reads the JSON error a route returned, falling back to `fallback` when the
  * body is missing or unreadable. Both /api routes answer with { error, details? }.
  */
-async function errorMessageFrom(response, fallback) {
-  const body = await response.json().catch(() => ({}));
+async function errorMessageFrom(response: Response, fallback: string): Promise<string> {
+  const body: { error?: string; details?: string[] } = await response.json().catch(() => ({}));
   const details = body.details?.length ? `: ${body.details.join(", ")}` : "";
   return (body.error || fallback) + details;
+}
+
+interface AddressFieldProps {
+  value: string;
+  onValueChange: (value: string) => void;
+  /** Whether the suggestion list is showing, which decides what Enter does. */
+  isOpen: boolean;
+  autoFocus?: boolean;
 }
 
 /**
  * The address field, and the anchor the suggestion popover positions itself
  * against. Split out from the form purely for readability.
  */
-function AddressField({ value, onValueChange, isOpen, autoFocus }) {
+function AddressField({ value, onValueChange, isOpen, autoFocus }: AddressFieldProps) {
   return (
     <PopoverAnchor asChild>
       {/* asChild keeps a real <input> in the form, so Enter still submits
@@ -77,11 +91,11 @@ function AddressField({ value, onValueChange, isOpen, autoFocus }) {
 // useMapsLibrary reads APIProvider's context, so it cannot live in the
 // component that renders APIProvider — hence this inner component.
 function RestaurantFinder() {
-  const [restaurants, setRestaurants] = useState([]);
-  const [userLocation, setUserLocation] = useState(null); // Don't load map until after location is given
-  const [error, setError] = useState(null);
+  const [restaurants, setRestaurants] = useState<Place[]>([]);
+  const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null); // Don't load map until after location is given
+  const [error, setError] = useState<string | null>(null);
   const [address, setAddress] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   // The address box is the fallback for whoever will not (or cannot) share
   // their location, so it stays out of the way until that happens. Once
@@ -127,7 +141,7 @@ function RestaurantFinder() {
         setSuggestions(
           results
             .map((suggestion) => suggestion.placePrediction?.text?.text)
-            .filter(Boolean)
+            .filter((text): text is string => Boolean(text))
         );
       } catch {
         // Suggestions are a convenience; a failure here must not block the
@@ -143,7 +157,7 @@ function RestaurantFinder() {
   }, [places, address]);
 
   /** Shared tail of both entry points: recenter, then search from a coordinate. */
-  const searchRestaurantsAt = async (latitude, longitude) => {
+  const searchRestaurantsAt = async (latitude: number, longitude: number) => {
     setUserLocation({ lat: latitude, lng: longitude });
     setCameraProps((props) => ({ ...props, center: { lat: latitude, lng: longitude } }));
 
@@ -161,7 +175,8 @@ function RestaurantFinder() {
         return;
       }
 
-      const data = await response.json();
+      // Places leaves `places` out entirely when nothing matched.
+      const data: { places?: Place[] } = await response.json();
       setRestaurants(data.places || []);
     } catch {
       setError("Could not reach the server. Is it running?");
@@ -193,7 +208,7 @@ function RestaurantFinder() {
     );
   };
 
-  const searchByAddress = async (event) => {
+  const searchByAddress = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
 
@@ -217,7 +232,8 @@ function RestaurantFinder() {
         return;
       }
 
-      const { latitude, longitude } = await response.json();
+      const { latitude, longitude }: { latitude: number; longitude: number } =
+        await response.json();
       await searchRestaurantsAt(latitude, longitude);
     } catch {
       setError("Could not reach the server. Is it running?");
@@ -226,7 +242,7 @@ function RestaurantFinder() {
     }
   };
 
-  const pickSuggestion = (text) => {
+  const pickSuggestion = (text: string) => {
     skipNextSuggestionFetch.current = true;
     setAddress(text);
     setSuggestions([]);
