@@ -67,3 +67,4 @@ export {
   requestHeadersOf,
   resetRateLimit,
 };
+export type { FetchMock };
