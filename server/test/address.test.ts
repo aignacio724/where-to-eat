@@ -29,7 +29,7 @@ test.describe("validateAddress", () => {
   });
 
   test.describe("rejects missing or non-string values", () => {
-    const badValues = [
+    const badValues: [label: string, value: unknown][] = [
       ["missing", undefined],
       ["empty string", ""],
       ["whitespace only", "   "],
