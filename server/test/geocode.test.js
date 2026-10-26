@@ -8,7 +8,7 @@ import {
   fakeResponse,
   mockFetch,
   resetRateLimit,
-} from "./helpers.js";
+} from "./helpers.ts";
 import { GEOCODE_URL } from "../app.ts";
 
 const ADDRESS = "1600 Amphitheatre Pkwy, Mountain View, CA";
