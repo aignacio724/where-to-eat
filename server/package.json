@@ -3,14 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "description": "Express API for where-to-eat",
-  "main": "server.js",
+  "main": "server.ts",
   "type": "module",
   "engines": {
     "node": ">=22.18"
   },
   "scripts": {
-    "dev": "node --watch server.js",
-    "start": "node server.js",
+    "dev": "node --watch server.ts",
+    "start": "node server.ts",
     "test": "node --test \"test/*.test.*\"",
     "test:watch": "node --test --watch \"test/*.test.*\"",
     "test:coverage": "node --test --experimental-test-coverage \"test/*.test.*\""
