@@ -4,6 +4,9 @@
   // what type stripping can handle.
   "compilerOptions": {
     "target": "esnext",
+    // No DOM: browser globals do not exist here, and @types/node supplies the
+    // real fetch types (its json() returns unknown, not the DOM's any).
+    "lib": ["esnext"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "noEmit": true,

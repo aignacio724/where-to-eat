@@ -9,7 +9,7 @@ import {
   mockFetch,
   resetRateLimit,
 } from "./helpers.js";
-import { GEOCODE_URL } from "../app.js";
+import { GEOCODE_URL } from "../app.ts";
 
 const ADDRESS = "1600 Amphitheatre Pkwy, Mountain View, CA";
 

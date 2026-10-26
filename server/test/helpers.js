@@ -1,4 +1,4 @@
-import { app } from "../app.js";
+import { app } from "../app.ts";
 import { resetRateLimit } from "../rateLimit.ts";
 
 const TEST_API_KEY = "test-api-key-do-not-use";
