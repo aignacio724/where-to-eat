@@ -39,7 +39,7 @@ test.describe("validateCoordinates", () => {
   });
 
   test.describe("rejects non-numeric values", () => {
-    const badValues = [
+    const badValues: [label: string, value: unknown][] = [
       ["numeric string", "37.77"],
       ["empty string", ""],
       ["null", null],
@@ -59,7 +59,11 @@ test.describe("validateCoordinates", () => {
   });
 
   test.describe("rejects out-of-range values", () => {
-    const outOfRange = [
+    const outOfRange: [
+      label: string,
+      body: { latitude: number; longitude: number },
+      expectedField: "latitude" | "longitude",
+    ][] = [
       ["latitude above 90", { latitude: 90.1, longitude: 0 }, "latitude"],
       ["latitude below -90", { latitude: -90.1, longitude: 0 }, "latitude"],
       ["longitude above 180", { latitude: 0, longitude: 180.1 }, "longitude"],
