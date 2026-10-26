@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import express from "express";
 import request from "supertest";
 
-import { app, TEST_API_KEY, fakeResponse, mockFetch, resetRateLimit } from "./helpers.js";
+import { app, TEST_API_KEY, fakeResponse, mockFetch, resetRateLimit } from "./helpers.ts";
 import { createApiLimiter, MAX_REQUESTS } from "../rateLimit.ts";
 
 const SF = { latitude: 37.7749, longitude: -122.4194 };

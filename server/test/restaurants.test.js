@@ -10,7 +10,7 @@ import {
   requestBodyOf,
   requestHeadersOf,
   resetRateLimit,
-} from "./helpers.js";
+} from "./helpers.ts";
 import { MAX_RESULT_COUNT, RADIUS, PLACES_URL, FIELD_MASK } from "../app.ts";
 
 const SF = { latitude: 37.7749, longitude: -122.4194 };
