@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 
-import { validateCoordinates } from "./coordinates.js";
+import { validateCoordinates } from "./coordinates.ts";
 import { validateAddress } from "./address.js";
 import { apiLimiter } from "./rateLimit.js";
 
