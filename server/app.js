@@ -3,7 +3,7 @@ import cors from "cors";
 
 import { validateCoordinates } from "./coordinates.ts";
 import { validateAddress } from "./address.ts";
-import { apiLimiter } from "./rateLimit.js";
+import { apiLimiter } from "./rateLimit.ts";
 
 const MAX_RESULT_COUNT = 20;
 const RADIUS = 8046.0; // 5 miles
