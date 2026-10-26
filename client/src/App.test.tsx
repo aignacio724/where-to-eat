@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 
 import App from './App';
 
@@ -12,11 +13,11 @@ import App from './App';
 const mockFetchSuggestions = vi.fn();
 
 vi.mock('@vis.gl/react-google-maps', () => ({
-  APIProvider: ({ children }) => children,
-  Map: ({ children }) => <div data-testid="map">{children}</div>,
+  APIProvider: ({ children }: { children: ReactNode }) => children,
+  Map: ({ children }: { children: ReactNode }) => <div data-testid="map">{children}</div>,
   // Only restaurant markers carry a title; the user's pin does not. Splitting
   // them here keeps the counts in the tests unambiguous.
-  AdvancedMarker: ({ title, children }) => (
+  AdvancedMarker: ({ title, children }: { title?: string; children?: ReactNode }) => (
     <div data-testid={title ? 'restaurant-marker' : 'user-marker'} data-title={title}>
       {children}
     </div>
@@ -24,7 +25,7 @@ vi.mock('@vis.gl/react-google-maps', () => ({
   Pin: () => <div data-testid="pin" />,
   useMapsLibrary: () => ({
     AutocompleteSuggestion: {
-      fetchAutocompleteSuggestions: (...args) => mockFetchSuggestions(...args),
+      fetchAutocompleteSuggestions: (...args: unknown[]) => mockFetchSuggestions(...args),
     },
   }),
 }));
@@ -44,14 +45,25 @@ const PLACES_BODY = {
   ],
 };
 
+// A minimal stand-in for the subset of the Fetch Response interface that
+// App.tsx touches.
+interface FakeResponse {
+  ok: boolean;
+  status: number;
+  json: () => Promise<unknown>;
+}
+
+/** What a test swaps in for fetch: same arguments, resolving to a fake response. */
+type FetchImpl = (...args: Parameters<typeof fetch>) => Promise<FakeResponse>;
+
 /** Builds a Response-like object for the two fields App.tsx reads. */
-function jsonResponse(body, { ok = true, status = 200 } = {}) {
+function jsonResponse(body: unknown, { ok = true, status = 200 } = {}): FakeResponse {
   return { ok, status, json: async () => body };
 }
 
 /** Routes a mocked fetch by URL so a test can answer each endpoint separately. */
-function mockRoutes({ geocode, restaurants }) {
-  return vi.fn(async (url) => {
+function mockRoutes({ geocode, restaurants }: { geocode?: FakeResponse; restaurants?: FakeResponse }) {
+  return vi.fn<FetchImpl>(async (url) => {
     if (url === '/api/geocode') return geocode ?? jsonResponse({ ...SF });
     if (url === '/api/restaurants') return restaurants ?? jsonResponse(PLACES_BODY);
     throw new Error(`unexpected fetch to ${url}`);
@@ -123,8 +135,9 @@ describe('geolocation path', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/restaurants', expect.anything()));
 
-    const [, init] = fetchMock.mock.calls.find(([url]) => url === '/api/restaurants');
-    expect(JSON.parse(init.body)).toEqual(SF);
+    // App.tsx sends every body through JSON.stringify.
+    const [, init] = fetchMock.mock.calls.find(([url]) => url === '/api/restaurants')!;
+    expect(JSON.parse(init?.body as string)).toEqual(SF);
   });
 
   test('renders a marker per returned restaurant, plus the user pin', async () => {
@@ -194,11 +207,12 @@ describe('address path', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/restaurants', expect.anything()));
 
-    const [, geocodeInit] = fetchMock.mock.calls.find(([url]) => url === '/api/geocode');
-    expect(JSON.parse(geocodeInit.body)).toEqual({ address: '1600 Amphitheatre Pkwy' });
+    // App.tsx sends every body through JSON.stringify.
+    const [, geocodeInit] = fetchMock.mock.calls.find(([url]) => url === '/api/geocode')!;
+    expect(JSON.parse(geocodeInit?.body as string)).toEqual({ address: '1600 Amphitheatre Pkwy' });
 
-    const [, searchInit] = fetchMock.mock.calls.find(([url]) => url === '/api/restaurants');
-    expect(JSON.parse(searchInit.body)).toEqual(SF);
+    const [, searchInit] = fetchMock.mock.calls.find(([url]) => url === '/api/restaurants')!;
+    expect(JSON.parse(searchInit?.body as string)).toEqual(SF);
   });
 
   test('works without geolocation ever being granted', async () => {
@@ -556,12 +570,13 @@ describe('focus stays in the address field', () => {
 describe('searching overlay', () => {
   /** A fetch whose /api/restaurants reply waits for the returned release fn. */
   function stallableRoutes() {
-    let release;
-    const gate = new Promise((resolve) => {
+    // The executor runs synchronously, so release is set before it is returned.
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
 
-    const fetchMock = vi.fn(async (url) => {
+    const fetchMock = vi.fn<FetchImpl>(async (url) => {
       if (url === '/api/geocode') return jsonResponse({ ...SF });
       if (url === '/api/restaurants') {
         await gate;
