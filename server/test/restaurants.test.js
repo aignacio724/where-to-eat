@@ -11,7 +11,7 @@ import {
   requestHeadersOf,
   resetRateLimit,
 } from "./helpers.js";
-import { MAX_RESULT_COUNT, RADIUS, PLACES_URL, FIELD_MASK } from "../app.js";
+import { MAX_RESULT_COUNT, RADIUS, PLACES_URL, FIELD_MASK } from "../app.ts";
 
 const SF = { latitude: 37.7749, longitude: -122.4194 };
 

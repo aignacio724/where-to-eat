@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
 
 import { validateCoordinates } from "./coordinates.ts";
@@ -11,6 +11,21 @@ const PLACES_URL = "https://places.googleapis.com/v1/places:searchNearby";
 const GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json";
 const FIELD_MASK =
   "places.displayName,places.formattedAddress,places.rating,places.location";
+
+/** The parts of a Geocoding web service response that /api/geocode reads. */
+interface GeocodeResponse {
+  status: string;
+  results?: {
+    formatted_address: string;
+    geometry?: { location?: { lat: number; lng: number } };
+  }[];
+}
+
+/** The fields body-parser (behind express.json()) adds to the errors it raises. */
+interface BodyParserError extends Error {
+  status?: number;
+  type?: string;
+}
 
 // Read lazily rather than at module load so tests can control the environment
 // and so a key added after boot is picked up.
@@ -37,7 +52,7 @@ app.post("/api/restaurants", async (req, res) => {
     return res.status(400).json({ error: "Invalid coordinates", details });
   }
 
-  const { latitude, longitude } = req.body;
+  const { latitude, longitude }: { latitude: number; longitude: number } = req.body;
 
   // make post request to google places api 'searchNearBy'
   try {
@@ -45,7 +60,7 @@ app.post("/api/restaurants", async (req, res) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Goog-Api-Key": getApiKey(),
+        "X-Goog-Api-Key": getApiKey() ?? "",
         // list of fields to return in the response
         "X-Goog-FieldMask": FIELD_MASK,
       },
@@ -88,7 +103,7 @@ app.post("/api/geocode", async (req, res) => {
     return res.status(400).json({ error: "Invalid address", details });
   }
 
-  const { address } = req.body;
+  const { address }: { address: string } = req.body;
 
   // Unlike the Places API, the Geocoding web service takes the key as a query
   // param. URLSearchParams encodes the address for us.
@@ -104,7 +119,7 @@ app.post("/api/geocode", async (req, res) => {
         .json({ error: response.statusText || "Geocoding request failed" });
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as GeocodeResponse;
 
     // The Geocoding web service reports failures as a `status` field on an
     // HTTP 200, so checking the status code alone is not enough.
@@ -139,7 +154,7 @@ app.post("/api/geocode", async (req, res) => {
 
 // express.json() throws on a malformed body. Without this, Express's default
 // handler answers with an HTML stack trace instead of the JSON the client expects.
-app.use((err, req, res, next) => {
+app.use((err: BodyParserError, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     return res.status(400).json({ error: "Malformed JSON body" });
   }
