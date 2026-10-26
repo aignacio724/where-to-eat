@@ -17,7 +17,7 @@ function DualArc({
         }
       `}</style>
       <div
-        className={cn("rounded-full border-[5px] border-transparent border-y-current", className)}
+        className={cn("rounded-full border-5 border-transparent border-y-current", className)}
         style={{
           animationName: "loading-ui-dual-arc-spin",
           animationDuration: "var(--duration, 1s)",

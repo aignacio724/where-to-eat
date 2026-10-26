@@ -330,7 +330,7 @@ function RestaurantFinder() {
           Note this gates the Map, not the APIProvider above it: Places
           autocomplete needs that context while the user is still typing. */}
       {(isSearching || userLocation) && (
-      <div className="relative mt-5 h-[600px] w-full overflow-hidden rounded-lg">
+      <div className="relative mt-5 h-150 w-full overflow-hidden rounded-lg">
         {userLocation && (
         <Map
           {...cameraProps}
