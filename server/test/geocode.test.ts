@@ -8,6 +8,7 @@ import {
   fakeResponse,
   mockFetch,
   resetRateLimit,
+  type FetchMock,
 } from "./helpers.ts";
 import { GEOCODE_URL } from "../app.ts";
 
@@ -23,13 +24,14 @@ const GEOCODE_PAYLOAD = {
   ],
 };
 
-/** Reads the URL app.js handed to fetch. */
-function requestUrlOf(fetchMock, callIndex = 0) {
-  return fetchMock.mock.calls[callIndex].arguments[0];
+/** Reads the URL app.ts handed to fetch. */
+function requestUrlOf(fetchMock: FetchMock, callIndex = 0): string {
+  // app.ts always passes the URL as a string, never a URL or Request.
+  return fetchMock.mock.calls[callIndex].arguments[0] as string;
 }
 
 test.describe("POST /api/geocode", () => {
-  let originalKey;
+  let originalKey: string | undefined;
 
   test.beforeEach(() => {
     // Counters are shared across the whole suite, so clear them per test
