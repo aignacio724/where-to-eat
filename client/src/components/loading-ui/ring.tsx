@@ -1,10 +1,12 @@
+import type { ComponentProps } from "react";
+
 import { cn } from "@/lib/utils";
 
 function Ring({
   className,
   style,
   ...props
-}) {
+}: ComponentProps<"svg">) {
   return (
     <>
       <style>{`
