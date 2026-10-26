@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { validateCoordinates } from "../coordinates.js";
+import { validateCoordinates } from "../coordinates.ts";
 
 test.describe("validateCoordinates", () => {
   test("accepts a normal coordinate pair", () => {
