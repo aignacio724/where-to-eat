@@ -32,4 +32,4 @@ function validateCoordinates(body) {
   return details;
 }
 
-module.exports = { validateCoordinates };
+export { validateCoordinates };

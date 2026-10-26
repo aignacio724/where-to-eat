@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Express API for where-to-eat",
   "main": "server.js",
-  "type": "commonjs",
+  "type": "module",
   "engines": {
     "node": ">=22.18"
   },

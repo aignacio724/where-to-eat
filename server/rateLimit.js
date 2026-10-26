@@ -1,4 +1,4 @@
-const { rateLimit, MemoryStore, MINUTE } = require("express-rate-limit");
+import { rateLimit, MemoryStore, MINUTE } from "express-rate-limit";
 
 const WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS) || MINUTE;
 const MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX) || 30;
@@ -38,7 +38,7 @@ function resetRateLimit() {
   apiLimiterStore.resetAll();
 }
 
-module.exports = {
+export {
   createApiLimiter,
   apiLimiter,
   resetRateLimit,

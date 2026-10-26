@@ -1,8 +1,8 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const request = require("supertest");
+import test from "node:test";
+import assert from "node:assert/strict";
+import request from "supertest";
 
-const {
+import {
   app,
   TEST_API_KEY,
   fakeResponse,
@@ -10,8 +10,8 @@ const {
   requestBodyOf,
   requestHeadersOf,
   resetRateLimit,
-} = require("./helpers");
-const { MAX_RESULT_COUNT, RADIUS, PLACES_URL, FIELD_MASK } = require("../app");
+} from "./helpers.js";
+import { MAX_RESULT_COUNT, RADIUS, PLACES_URL, FIELD_MASK } from "../app.js";
 
 const SF = { latitude: 37.7749, longitude: -122.4194 };
 

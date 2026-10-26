@@ -17,4 +17,4 @@ function validateAddress(body) {
   return details;
 }
 
-module.exports = { validateAddress, ADDRESS_MAX_LENGTH };
+export { validateAddress, ADDRESS_MAX_LENGTH };

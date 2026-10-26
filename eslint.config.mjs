@@ -12,12 +12,12 @@ export default defineConfig([
 
   js.configs.recommended,
 
-  // Server: Node.js, CommonJS
+  // Server: Node.js, ES modules
   {
     files: ["server/**/*.{js,ts}"],
     languageOptions: {
       ecmaVersion: "latest",
-      sourceType: "commonjs",
+      sourceType: "module",
       globals: globals.node,
     },
   },

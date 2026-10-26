@@ -1,5 +1,5 @@
-const { app } = require("../app");
-const { resetRateLimit } = require("../rateLimit");
+import { app } from "../app.js";
+import { resetRateLimit } from "../rateLimit.js";
 
 const TEST_API_KEY = "test-api-key-do-not-use";
 
@@ -34,7 +34,7 @@ function requestHeadersOf(fetchMock, callIndex = 0) {
   return init.headers;
 }
 
-module.exports = {
+export {
   app,
   TEST_API_KEY,
   fakeResponse,
