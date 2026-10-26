@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import { validateCoordinates } from "./coordinates.ts";
-import { validateAddress } from "./address.js";
+import { validateAddress } from "./address.ts";
 import { apiLimiter } from "./rateLimit.js";
 
 const MAX_RESULT_COUNT = 20;

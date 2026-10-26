@@ -1,12 +1,17 @@
 const ADDRESS_MAX_LENGTH = 250;
 
+/** A request body as it arrives: untrusted, so every field is `unknown`. */
+interface AddressBody {
+  address?: unknown;
+}
+
 /**
  * Validates a free-text address from a request body.
  * Returns an array of human-readable problems; an empty array means valid.
  */
-function validateAddress(body) {
+function validateAddress(body: AddressBody | null | undefined): string[] {
   const { address } = body ?? {};
-  const details = [];
+  const details: string[] = [];
 
   if (typeof address !== "string" || address.trim() === "") {
     details.push("address is required and must be a non-empty string");
