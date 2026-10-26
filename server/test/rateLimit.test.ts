@@ -9,7 +9,7 @@ import { createApiLimiter, MAX_REQUESTS } from "../rateLimit.ts";
 const SF = { latitude: 37.7749, longitude: -122.4194 };
 
 /** A throwaway app wrapping its own limiter, so the shared one is untouched. */
-function appWithLimit(max) {
+function appWithLimit(max: number) {
   const { limiter } = createApiLimiter({ windowMs: 60_000, max });
   const testApp = express();
 
@@ -72,7 +72,7 @@ test.describe("api rate limiting", () => {
   });
 
   test.describe("wired into the real app", () => {
-    let originalKey;
+    let originalKey: string | undefined;
 
     test.beforeEach(() => {
       resetRateLimit();
