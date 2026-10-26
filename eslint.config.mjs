@@ -14,7 +14,7 @@ export default defineConfig([
 
   // Server: Node.js, ES modules
   {
-    files: ["server/**/*.{js,ts}"],
+    files: ["server/**/*.ts"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -24,7 +24,7 @@ export default defineConfig([
 
   // Client: React, browser, ES modules
   {
-    files: ["client/**/*.{js,jsx,ts,tsx}"],
+    files: ["client/**/*.{ts,tsx}"],
     extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
     languageOptions: {
       ecmaVersion: "latest",
@@ -70,17 +70,9 @@ export default defineConfig([
   // Last, so it wins over the shared rules above. Everything else stays
   // linted, since these files are ours to edit.
   {
-    files: ["client/src/components/ui/**/*.{jsx,tsx}"],
+    files: ["client/src/components/ui/**/*.tsx"],
     rules: {
       "react-refresh/only-export-components": "off",
-    },
-  },
-  // In .jsx the React import has no types left to serve, so it reads as
-  // unused. In .tsx it is used, and typescript-eslint's rule sees that.
-  {
-    files: ["client/src/components/ui/**/*.jsx"],
-    rules: {
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^React$" }],
     },
   },
 ]);
