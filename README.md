@@ -18,7 +18,13 @@ server/.env     GOOGLE_MAPS_API_KEY=...
 client/.env     VITE_GOOGLE_MAPS_API_KEY=...
 ```
 
-Other scripts: `npm test` (both workspaces), `npm run lint`, `npm run build`.
+Other scripts: `npm test` (both workspaces), `npm run lint`, `npm run build`,
+`npm run typecheck`.
+
+Everything is TypeScript. The server needs Node 22.18 or later: it runs its
+`.ts` files directly, with Node stripping the types, so there is no build step.
+Vite compiles the client. Neither checks types, so `npm run typecheck` runs
+`tsc` over the client, its Vite config, and the server.
 
 ## Architecture
 
@@ -67,7 +73,7 @@ reaches the client.
 
 **The Geocoding API reports failures as HTTP 200 with a `status` field in the
 body.** Checking the status code alone silently accepts `ZERO_RESULTS` as
-success. `server/app.js` maps `ZERO_RESULTS` to 404 and other non-`OK` statuses
+success. `server/app.ts` maps `ZERO_RESULTS` to 404 and other non-`OK` statuses
 to 502.
 
 ## Design decision: address autocomplete
@@ -153,12 +159,12 @@ against a runaway loop in your own code just as well as against an attacker.
 
 | Guard | Where | Purpose |
 |---|---|---|
-| Rate limit, 30/min per IP | `server/rateLimit.js`, applied to `/api` | Bounds cost; invalid requests count too, so spamming 400s is not free |
+| Rate limit, 30/min per IP | `server/rateLimit.ts`, applied to `/api` | Bounds cost; invalid requests count too, so spamming 400s is not free |
 | Body cap, 10kb | `express.json({ limit })` | Oversized bodies are rejected with a 413 as JSON, not Express's HTML page |
-| Address length cap, 250 | `server/address.js` | Rejected before any Google call |
-| Coordinate validation | `server/coordinates.js` | Uses `Number.isFinite`, so `0,0` is valid and `NaN`/strings are not |
-| Debounce, 300ms | `client/src/App.jsx` | One autocomplete request per typing pause, not per keystroke |
-| Minimum 3 characters | `client/src/App.jsx` | Short prefixes return nothing useful and are not worth billing |
+| Address length cap, 250 | `server/address.ts` | Rejected before any Google call |
+| Coordinate validation | `server/coordinates.ts` | Uses `Number.isFinite`, so `0,0` is valid and `NaN`/strings are not |
+| Debounce, 300ms | `client/src/App.tsx` | One autocomplete request per typing pause, not per keystroke |
+| Minimum 3 characters | `client/src/App.tsx` | Short prefixes return nothing useful and are not worth billing |
 
 Rate limit defaults are tunable via `RATE_LIMIT_MAX` and `RATE_LIMIT_WINDOW_MS`.
 
@@ -174,14 +180,14 @@ npm run test:server
 npm test --workspace=client
 ```
 
-Two layers, 115 tests:
+Two layers, 122 tests:
 
 - **Server** — `node:test` + `supertest`, `server/test/`. `global.fetch` is
   mocked, so no test reaches Google. Covers validation, upstream errors, the
   HTTP-200-with-error-status trap, key-leak assertions, and rate limiting.
   The rate limiter is *tested*, not disabled: `resetRateLimit()` clears the
   store between cases.
-- **Client** — Vitest + React Testing Library, `client/src/App.test.jsx`.
+- **Client** — Vitest + React Testing Library, `client/src/App.test.tsx`.
   `@vis.gl/react-google-maps` is mocked, so no API key or network is involved.
   Covers both entry paths, every error branch, and the autocomplete guards.
 
