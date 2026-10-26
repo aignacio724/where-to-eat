@@ -36,7 +36,7 @@ export default defineConfig([
 
   // Client build tooling runs in Node, not the browser
   {
-    files: ["client/vite.config.js"],
+    files: ["client/vite.config.ts"],
     languageOptions: {
       globals: globals.node,
     },

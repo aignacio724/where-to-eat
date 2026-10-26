@@ -38,7 +38,7 @@ origin for data; the one exception is autocomplete, which is explained below.
 
 ### Why the client uses relative URLs
 
-`client/vite.config.js` proxies `/api` to the Express server, so the frontend
+`client/vite.config.ts` proxies `/api` to the Express server, so the frontend
 calls `fetch("/api/restaurants")` with no host or port. This keeps requests
 same-origin, so CORS never applies in development, and it avoids baking a
 `localhost` URL into the bundle.
