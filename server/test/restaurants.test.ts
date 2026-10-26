@@ -33,7 +33,7 @@ const PLACES_PAYLOAD = {
 };
 
 test.describe("POST /api/restaurants", () => {
-  let originalKey;
+  let originalKey: string | undefined;
 
   test.beforeEach(() => {
     // Counters are shared across the whole suite, so clear them per test
@@ -74,7 +74,7 @@ test.describe("POST /api/restaurants", () => {
 
       const [url, init] = fetchMock.mock.calls[0].arguments;
       assert.equal(url, PLACES_URL);
-      assert.equal(init.method, "POST");
+      assert.equal(init?.method, "POST");
 
       const headers = requestHeadersOf(fetchMock);
       assert.equal(headers["Content-Type"], "application/json");
