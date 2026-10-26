@@ -5,12 +5,15 @@
   "description": "Express API for where-to-eat",
   "main": "server.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js",
-    "test": "node --test test/*.test.js",
-    "test:watch": "node --test --watch test/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
+    "test": "node --test \"test/*.test.*\"",
+    "test:watch": "node --test --watch \"test/*.test.*\"",
+    "test:coverage": "node --test --experimental-test-coverage \"test/*.test.*\""
   },
   "license": "ISC",
   "dependencies": {
@@ -20,6 +23,10 @@
     "express-rate-limit": "^8.6.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.5",
+    "@types/supertest": "^6.0.3",
     "supertest": "^7.1.4"
   }
 }

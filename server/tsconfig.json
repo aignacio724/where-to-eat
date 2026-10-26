@@ -1,0 +1,29 @@
+{
+  // Type-checking only: Node runs the .ts files directly by stripping their
+  // types, so nothing is emitted and the options below keep the code within
+  // what type stripping can handle.
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noEmit": true,
+
+    // Files are converted one at a time; JS files stay in the program so
+    // converted files get types inferred from the ones not yet converted.
+    "allowJs": true,
+    "checkJs": false,
+
+    "strict": true,
+    "skipLibCheck": true,
+
+    // Node needs the real extension on relative imports (./app.ts).
+    "allowImportingTsExtensions": true,
+    // No enums, namespaces or parameter properties: Node cannot strip them.
+    "erasableSyntaxOnly": true,
+    // Type-only imports must say so, since stripping removes them wholesale.
+    "verbatimModuleSyntax": true,
+
+    "types": ["node"]
+  },
+  "include": ["**/*.js", "**/*.ts"]
+}

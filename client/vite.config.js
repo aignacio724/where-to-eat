@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   // `@/` -> src/, the import prefix shadcn/ui components are generated with.
-  // Mirrored in jsconfig.json so editors resolve it too.
+  // Mirrored in tsconfig.json so tsc and editors resolve it too.
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },
