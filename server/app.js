@@ -1,9 +1,9 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
 
-const { validateCoordinates } = require("./coordinates");
-const { validateAddress } = require("./address");
-const { apiLimiter } = require("./rateLimit");
+import { validateCoordinates } from "./coordinates.js";
+import { validateAddress } from "./address.js";
+import { apiLimiter } from "./rateLimit.js";
 
 const MAX_RESULT_COUNT = 20;
 const RADIUS = 8046.0; // 5 miles
@@ -151,7 +151,7 @@ app.use((err, req, res, next) => {
   return next(err);
 });
 
-module.exports = {
+export {
   app,
   MAX_RESULT_COUNT,
   RADIUS,

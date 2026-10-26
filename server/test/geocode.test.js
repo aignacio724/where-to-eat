@@ -1,15 +1,15 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const request = require("supertest");
+import test from "node:test";
+import assert from "node:assert/strict";
+import request from "supertest";
 
-const {
+import {
   app,
   TEST_API_KEY,
   fakeResponse,
   mockFetch,
   resetRateLimit,
-} = require("./helpers");
-const { GEOCODE_URL } = require("../app");
+} from "./helpers.js";
+import { GEOCODE_URL } from "../app.js";
 
 const ADDRESS = "1600 Amphitheatre Pkwy, Mountain View, CA";
 

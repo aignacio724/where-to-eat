@@ -1,7 +1,7 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
+import test from "node:test";
+import assert from "node:assert/strict";
 
-const { validateCoordinates } = require("../coordinates");
+import { validateCoordinates } from "../coordinates.js";
 
 test.describe("validateCoordinates", () => {
   test("accepts a normal coordinate pair", () => {
